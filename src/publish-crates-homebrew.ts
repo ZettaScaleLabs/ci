@@ -27,7 +27,7 @@ export type Input = {
 };
 
 export function setup(): Input {
-  const liveRun = core.getBooleanInput("live-run", { required: true });
+  const liveRun = core.getBooleanInput("dry-run", { required: true });
   const version = core.getInput("version", { required: true });
   const repo = core.getInput("repo", { required: true });
   const formulae = core.getInput("formulae", { required: true });
