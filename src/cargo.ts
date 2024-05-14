@@ -51,7 +51,7 @@ type CargoMetadata = {
  * @returns The list of Cargo packages present in the workspace or crate.
  */
 export function packages(path: string): Package[] {
-  const metadataContents = sh("cargo metadata --no-deps --format-version=1", { cwd: path });
+  const metadataContents = sh("cargo metadata --no-deps --format-version=1", { cwd: path }).stdout;
   const metadata = JSON.parse(metadataContents) as CargoMetadata;
 
   const result = [] as Package[];
@@ -138,7 +138,7 @@ type CargoManifest = {
 export async function bump(path: string, version: string) {
   core.startGroup(`Bumping package versions in ${path} to ${version}`);
   const manifestPath = `${path}/Cargo.toml`;
-  const manifestRaw = toml.get(manifestPath);
+  const manifestRaw = toml.get(manifestPath) as Record<string, unknown>;
 
   if ("workspace" in manifestRaw) {
     await toml.set(manifestPath, ["workspace", "package", "version"], version);
@@ -169,7 +169,7 @@ export async function bump(path: string, version: string) {
 export async function bumpDependencies(path: string, pattern: RegExp, version: string, _branch?: string) {
   core.startGroup(`Bumping ${pattern} dependencies in ${path} to ${version}`);
   const manifestPath = `${path}/Cargo.toml`;
-  const manifestRaw = toml.get(manifestPath);
+  const manifestRaw = toml.get(manifestPath) as Record<string, unknown>;
 
   let manifest: CargoManifest;
   let prefix: string[];
@@ -228,7 +228,7 @@ export async function bumpDependencies(path: string, pattern: RegExp, version: s
 export async function setRegistry(path: string, pattern: RegExp, registry: string): Promise<void> {
   core.startGroup(`Changing ${pattern} dependencies' registry ${registry}`);
   const manifestPath = `${path}/Cargo.toml`;
-  const manifestRaw = toml.get(manifestPath);
+  const manifestRaw = toml.get(manifestPath) as Record<string, unknown>;
 
   let manifest: CargoManifest;
   let prefix: string[];
@@ -271,7 +271,7 @@ export function packagesDebian(path: string): Package[] {
   const result = [] as Package[];
 
   for (const package_ of packages(path)) {
-    const manifestRaw = toml.get(package_.manifestPath);
+    const manifestRaw = toml.get(package_.manifestPath) as Record<string, unknown>;
     const manifest = ("workspace" in manifestRaw ? manifestRaw["workspace"] : manifestRaw) as CargoManifest;
 
     if ("metadata" in manifest.package && "deb" in manifest.package.metadata) {
@@ -295,7 +295,7 @@ export async function installBinaryCached(name: string) {
   if (process.env["GITHUB_ACTIONS"] != undefined) {
     const paths = [join(os.homedir(), ".cargo", "bin")];
     const version = config.lock.cratesio[name];
-    const key = `${os.platform()}-${os.release()}-${os.arch()}-${name}-${version}`;
+    const key = `${os.platform()}-${os.release()}-${os.arch()}-${name}-${version}-invalidate-temporarily`;
 
     // NOTE: We specify the Stable toolchain to override the current Rust
     // toolchain file in the current directory, as the caller can use this
@@ -304,7 +304,7 @@ export async function installBinaryCached(name: string) {
 
     const hit = await cache.restoreCache(paths, key);
     if (hit == undefined) {
-      sh(`cargo +stable install ${name} --force`);
+      sh(`cargo +stable install ${name} --force --version ${version}`);
       await cache.saveCache(paths, key);
     }
   } else {
@@ -327,7 +327,7 @@ export function build(path: string, target: string) {
 }
 
 export function hostTarget(): string {
-  return sh("rustc --version --verbose").match(/host: (?<target>.*)/).groups["target"];
+  return sh("rustc --version --verbose").stdout.match(/host: (?<target>.*)/).groups["target"];
 }
 
 export function buildDebian(path: string, target: string, version: string) {
@@ -398,6 +398,6 @@ export function isPublished(pkg: Package): boolean {
   if (!results) {
     return false;
   }
-  const publishedVersion = results.split("\n").at(0).match(/".*"/g).at(0).slice(1, -1);
+  const publishedVersion = results.stdout.split("\n").at(0).match(/".*"/g).at(0).slice(1, -1);
   return publishedVersion === pkg.version;
 }

@@ -24992,7 +24992,7 @@ function command_sh(cmd, options) {
     if (options.check && returns.status != 0) {
         throw new Error(`\`${cmd}\` failed with status code ${returns.status}:\n${returns.stderr}`);
     }
-    return returns.stdout;
+    return { stdout: returns.stdout, stderr: returns.stderr };
 }
 function exec(program, args, options) {
     options = options != null ? options : {};
@@ -25044,9 +25044,15 @@ function cloneFromGitHub(repo, options) {
         command.push(options.path);
     }
     command_sh(command.join(" "));
+    if (options.path != undefined) {
+        return options.path;
+    }
+    else {
+        return repo.split("/").at(1);
+    }
 }
 function describe(path = process.cwd()) {
-    return sh("git describe", { cwd: path }).trim();
+    return sh("git describe", { cwd: path }).stdout.trim();
 }
 
 ;// CONCATENATED MODULE: ./src/create-release-branch.ts
@@ -25076,7 +25082,7 @@ async function main(input) {
         const repo = input.repo.split("/")[1];
         const remote = `https://${input.githubToken}@github.com/${input.repo}.git`;
         cloneFromGitHub(input.repo, { token: input.githubToken, branch: input.branch });
-        const version = input.version ?? command_sh("git describe", { cwd: repo }).trimEnd();
+        const version = input.version ?? command_sh("git describe", { cwd: repo }).stdout.trimEnd();
         lib_core.setOutput("version", version);
         let branch;
         if (input.liveRun) {
@@ -25092,7 +25098,7 @@ async function main(input) {
             const branchesRaw = command_sh(`git for-each-ref --format='%(refname:strip=3)' --sort=authordate ${branchPattern}`, {
                 cwd: repo,
             });
-            const branches = branchesRaw.split("\n");
+            const branches = branchesRaw.stdout.split("\n");
             if (branches.length >= input.dryRunHistorySize) {
                 const toDelete = branches.slice(0, branches.length - input.dryRunHistorySize);
                 toDelete.forEach(branch => {

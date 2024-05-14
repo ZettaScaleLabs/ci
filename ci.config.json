@@ -10,7 +10,8 @@
       "cargo-deb": "2.1.0",
       "estuary": "0.1.1",
       "cross": "0.2.5",
-      "toml-cli2": "0.3.2"
+      "toml-cli2": "0.3.2",
+      "cargo-msrv": "0.16.0-beta.22"
     },
     "git": {
       "estuary": {

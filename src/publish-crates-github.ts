@@ -46,7 +46,7 @@ export async function main(input: Input) {
       // NOTE: We use compute the latest release (or pre-release) and use its tag name as the
       // starting tag for the next release.
       sh(`gh release list --repo ${input.repo} --exclude-drafts --order desc --json tagName`, { env });
-    const releases = JSON.parse(releasesRaw) as GitHubRelease[];
+    const releases = JSON.parse(releasesRaw.stdout) as GitHubRelease[];
     const releaseLatest = releases.at(0);
 
     if (input.liveRun) {

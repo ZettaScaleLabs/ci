@@ -3,7 +3,7 @@ import * as fs from "fs/promises";
 import { sh } from "./command";
 
 function setupAgent(): NodeJS.ProcessEnv {
-  const commands = sh("ssh-agent -s");
+  const commands = sh("ssh-agent -s").stdout;
   return Object.fromEntries([...commands.matchAll(/([A-Z_]+)=([^;]+);/g)].map(m => [m[1], m[2]]));
 }
 

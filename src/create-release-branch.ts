@@ -41,7 +41,7 @@ export async function main(input: Input) {
 
     git.cloneFromGitHub(input.repo, { token: input.githubToken, branch: input.branch });
 
-    const version = input.version ?? sh("git describe", { cwd: repo }).trimEnd();
+    const version = input.version ?? sh("git describe", { cwd: repo }).stdout.trimEnd();
     core.setOutput("version", version);
 
     let branch: string;
@@ -58,7 +58,7 @@ export async function main(input: Input) {
       const branchesRaw = sh(`git for-each-ref --format='%(refname:strip=3)' --sort=authordate ${branchPattern}`, {
         cwd: repo,
       });
-      const branches = branchesRaw.split("\n");
+      const branches = branchesRaw.stdout.split("\n");
 
       if (branches.length >= input.dryRunHistorySize) {
         const toDelete = branches.slice(0, branches.length - input.dryRunHistorySize);

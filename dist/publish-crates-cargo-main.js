@@ -81100,7 +81100,7 @@ const toml = await _toml__WEBPACK_IMPORTED_MODULE_4__/* .TOML.init */ .f.init();
  * @returns The list of Cargo packages present in the workspace or crate.
  */
 function packages(path) {
-    const metadataContents = (0,_command__WEBPACK_IMPORTED_MODULE_5__.sh)("cargo metadata --no-deps --format-version=1", { cwd: path });
+    const metadataContents = (0,_command__WEBPACK_IMPORTED_MODULE_5__.sh)("cargo metadata --no-deps --format-version=1", { cwd: path }).stdout;
     const metadata = JSON.parse(metadataContents);
     const result = [];
     for (const elem of metadata.packages) {
@@ -81291,14 +81291,14 @@ async function installBinaryCached(name) {
     if (process.env["GITHUB_ACTIONS"] != undefined) {
         const paths = [(0,path__WEBPACK_IMPORTED_MODULE_1__.join)(os__WEBPACK_IMPORTED_MODULE_0__.homedir(), ".cargo", "bin")];
         const version = _config__WEBPACK_IMPORTED_MODULE_6__/* .config.lock.cratesio */ .v.lock.cratesio[name];
-        const key = `${os__WEBPACK_IMPORTED_MODULE_0__.platform()}-${os__WEBPACK_IMPORTED_MODULE_0__.release()}-${os__WEBPACK_IMPORTED_MODULE_0__.arch()}-${name}-${version}`;
+        const key = `${os__WEBPACK_IMPORTED_MODULE_0__.platform()}-${os__WEBPACK_IMPORTED_MODULE_0__.release()}-${os__WEBPACK_IMPORTED_MODULE_0__.arch()}-${name}-${version}-invalidate-temporarily`;
         // NOTE: We specify the Stable toolchain to override the current Rust
         // toolchain file in the current directory, as the caller can use this
         // function with an arbitrary Rust toolchain, often resulting in build
         // failure
         const hit = await _actions_cache__WEBPACK_IMPORTED_MODULE_3__.restoreCache(paths, key);
         if (hit == undefined) {
-            (0,_command__WEBPACK_IMPORTED_MODULE_5__.sh)(`cargo +stable install ${name} --force`);
+            (0,_command__WEBPACK_IMPORTED_MODULE_5__.sh)(`cargo +stable install ${name} --force --version ${version}`);
             await _actions_cache__WEBPACK_IMPORTED_MODULE_3__.saveCache(paths, key);
         }
     }
@@ -81314,7 +81314,7 @@ function build(path, target) {
     sh(command.join(" "), { cwd: path });
 }
 function hostTarget() {
-    return sh("rustc --version --verbose").match(/host: (?<target>.*)/).groups["target"];
+    return sh("rustc --version --verbose").stdout.match(/host: (?<target>.*)/).groups["target"];
 }
 function buildDebian(path, target, version) {
     for (const package_ of packagesDebian(path)) {
@@ -81378,7 +81378,7 @@ function isPublished(pkg) {
     if (!results) {
         return false;
     }
-    const publishedVersion = results.split("\n").at(0).match(/".*"/g).at(0).slice(1, -1);
+    const publishedVersion = results.stdout.split("\n").at(0).match(/".*"/g).at(0).slice(1, -1);
     return publishedVersion === pkg.version;
 }
 
@@ -81436,7 +81436,7 @@ function sh(cmd, options) {
     if (options.check && returns.status != 0) {
         throw new Error(`\`${cmd}\` failed with status code ${returns.status}:\n${returns.stderr}`);
     }
-    return returns.stdout;
+    return { stdout: returns.stdout, stderr: returns.stderr };
 }
 function exec(program, args, options) {
     options = options != null ? options : {};
@@ -81491,7 +81491,7 @@ __nccwpck_require__.d(__webpack_exports__, {
 // UNUSED EXPORTS: gitEnv
 
 ;// CONCATENATED MODULE: ./ci.config.json
-const ci_config_namespaceObject = JSON.parse('{"git":{"user":{"name":"eclipse-zenoh-bot","email":"eclipse-zenoh-bot@users.noreply.github.com"}},"lock":{"cratesio":{"cargo-deb":"2.1.0","estuary":"0.1.1","cross":"0.2.5","toml-cli2":"0.3.2"},"git":{"estuary":{"url":"https://github.com/ZettaScaleLabs/estuary.git","branch":"main"}}}}');
+const ci_config_namespaceObject = JSON.parse('{"git":{"user":{"name":"eclipse-zenoh-bot","email":"eclipse-zenoh-bot@users.noreply.github.com"}},"lock":{"cratesio":{"cargo-deb":"2.1.0","estuary":"0.1.1","cross":"0.2.5","toml-cli2":"0.3.2","cargo-msrv":"0.16.0-beta.22"},"git":{"estuary":{"url":"https://github.com/ZettaScaleLabs/estuary.git","branch":"main"}}}}');
 ;// CONCATENATED MODULE: ./src/config.ts
 
 const config = ci_config_namespaceObject;

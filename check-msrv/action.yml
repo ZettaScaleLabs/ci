@@ -1,0 +1,15 @@
+name: Check MSRV
+
+inputs:
+  repo:
+    required: true
+  min:
+    required: false
+  branch:
+    required: false
+  github-token:
+    required: false
+
+runs:
+  using: node20
+  main: ../dist/check-msrv-main.js
