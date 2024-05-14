@@ -10,7 +10,12 @@ export type CommandOptions = {
   input?: string;
 };
 
-export function sh(cmd: string, options?: CommandOptions): string {
+export type CommandOutput = {
+  stdout: string;
+  stderr: string;
+};
+
+export function sh(cmd: string, options?: CommandOptions): CommandOutput {
   options = options != null ? options : {};
   options.env = options.env != null ? options.env : {};
   options.cwd = options.cwd != null ? options.cwd : ".";
@@ -51,7 +56,7 @@ export function sh(cmd: string, options?: CommandOptions): string {
     throw new Error(`\`${cmd}\` failed with status code ${returns.status}:\n${returns.stderr}`);
   }
 
-  return returns.stdout;
+  return { stdout: returns.stdout, stderr: returns.stderr };
 }
 
 export function exec(program: string, args: string[], options?: CommandOptions): string {

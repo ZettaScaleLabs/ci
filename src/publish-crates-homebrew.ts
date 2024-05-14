@@ -74,7 +74,7 @@ type Release = {
 export async function main(input: Input) {
   try {
     const repo = input.repo.split("/").at(1);
-    const tapPath = `${sh("brew --repository").trim()}/Library/Taps/${input.tap}`;
+    const tapPath = `${sh("brew --repository").stdout.trim()}/Library/Taps/${input.tap}`;
     const tapUrl = `https://${input.githubToken}@github.com/${input.tap}.git`;
 
     for (const target of [X86_64_APPLE_DARWIN, AARCH64_APPLE_DARWIN]) {

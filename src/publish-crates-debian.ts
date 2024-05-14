@@ -85,8 +85,8 @@ export async function main(input: Input) {
     sh("sudo apt-get update");
     sh("sudo apt-get install -y dpkg-dev");
 
-    await fs.writeFile(packagesPath, sh(`dpkg-scanpackages --multiversion ${input.version}`));
-    const packages = sh("cat .Packages-*");
+    await fs.writeFile(packagesPath, sh(`dpkg-scanpackages --multiversion ${input.version}`).stdout);
+    const packages = sh("cat .Packages-*").stdout;
     // NOTE: An unzipped package index is necessary for apt-get to recognize the
     // local repository created below
     await fs.writeFile(allPackagesPath, packages);
@@ -105,7 +105,7 @@ export async function main(input: Input) {
       const debs: Set<string> = new Set();
       for await (const dirent of await fs.opendir(input.version)) {
         const debPath = path.join(dirent.path, dirent.name);
-        const package_ = sh(`dpkg-deb --field ${debPath} Package`).trim();
+        const package_ = sh(`dpkg-deb --field ${debPath} Package`).stdout.trim();
         debs.add(package_);
       }
 

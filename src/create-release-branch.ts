@@ -37,7 +37,7 @@ export async function main(input: Input) {
 
     sh(`git clone --recursive ${remote}`);
 
-    const version = input.version ?? sh("git describe", { cwd: repo }).trimEnd();
+    const version = input.version ?? sh("git describe", { cwd: repo }).stdout.trimEnd();
     core.setOutput("version", version);
 
     let branch: string;
@@ -50,7 +50,7 @@ export async function main(input: Input) {
 
       const refsPattern = "refs/remotes/origin/release/dry-run";
       const refsRaw = sh(`git for-each-ref --format='%(refname)' --sort=authordate ${refsPattern}`, { cwd: repo });
-      const refs = refsRaw.split("\n");
+      const refs = refsRaw.stdout.split("\n");
 
       if (refs.length >= input.dryRunHistorySize) {
         sh(`git push origin --delete ${refs.at(0)}`, { cwd: repo });

@@ -6,7 +6,7 @@ type CloneFromGitHubOptions = {
   path?: string;
 };
 
-export function cloneFromGitHub(repo: string, options: CloneFromGitHubOptions) {
+export function cloneFromGitHub(repo: string, options: CloneFromGitHubOptions): string {
   const remote =
     options.token == undefined ? `https://github.com/${repo}.git` : `https://${options.token}@github.com/${repo}.git`;
 
@@ -20,8 +20,14 @@ export function cloneFromGitHub(repo: string, options: CloneFromGitHubOptions) {
   }
 
   sh(command.join(" "));
+
+  if (options.path != undefined) {
+    return options.path;
+  } else {
+    return repo.split("/").at(1);
+  }
 }
 
 export function describe(path: string = process.cwd()): string {
-  return sh("git describe", { cwd: path }).trim();
+  return sh("git describe", { cwd: path }).stdout.trim();
 }

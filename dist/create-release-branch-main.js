@@ -24777,7 +24777,7 @@ function sh(cmd, options) {
     if (options.check && returns.status != 0) {
         throw new Error(`\`${cmd}\` failed with status code ${returns.status}:\n${returns.stderr}`);
     }
-    return returns.stdout;
+    return { stdout: returns.stdout, stderr: returns.stderr };
 }
 function exec(program, args, options) {
     options = options != null ? options : {};
@@ -24840,7 +24840,7 @@ async function main(input) {
         const repo = input.repo.split("/")[1];
         const remote = `https://${input.githubToken}@github.com/${input.repo}.git`;
         sh(`git clone --recursive ${remote}`);
-        const version = input.version ?? sh("git describe", { cwd: repo }).trimEnd();
+        const version = input.version ?? sh("git describe", { cwd: repo }).stdout.trimEnd();
         lib_core.setOutput("version", version);
         let branch;
         if (input.liveRun) {
@@ -24852,7 +24852,7 @@ async function main(input) {
             lib_core.setOutput("branch", branch);
             const refsPattern = "refs/remotes/origin/release/dry-run";
             const refsRaw = sh(`git for-each-ref --format='%(refname)' --sort=authordate ${refsPattern}`, { cwd: repo });
-            const refs = refsRaw.split("\n");
+            const refs = refsRaw.stdout.split("\n");
             if (refs.length >= input.dryRunHistorySize) {
                 sh(`git push origin --delete ${refs.at(0)}`, { cwd: repo });
             }
