@@ -122,7 +122,24 @@ export async function main(input: Input) {
           // FIXME: Bumping the version before zenoh is released causes cargo check to return an error. Ignore for now
           sh("cargo check", { cwd: workspace, check: false });
           sh(
-            `git commit Cargo.toml Cargo.toml.in Cargo.lock --message 'chore: Bump \`${input.bumpDepsRegExp}\` version to \`${input.bumpDepsVersion}\`'`,
+            `git commit Cargo.lock --message 'chore: Update Cargo.lock to \`${input.bumpDepsVersion}\`'`,
+            gitOptions,
+          );
+
+          // Update build-resource/opaque-types
+          await cargo.bumpDependencies(
+            `${workspace}/build-resources/opaque-types/Cargo.toml`,
+            input.bumpDepsRegExp,
+            input.bumpDepsVersion,
+            false,
+            input.bumpDepsBranch,
+          );
+
+          // Update lockfile for build-resources/opaque-types
+          // FIXME: Bumping the version before zenoh is released causes cargo check to return an error. Ignore for now
+          sh("cargo check --manifest-path build-resources/opaque-types/Cargo.toml", { cwd: workspace, check: false });
+          sh(
+            `git commit build-resources/opaque-types/ --message 'chore: Bump build-resources/opaque-types version to \`${input.bumpDepsVersion}\`'`,
             gitOptions,
           );
         }

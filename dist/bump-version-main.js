@@ -80952,7 +80952,13 @@ async function main(input) {
                     // Update lockfile
                     // FIXME: Bumping the version before zenoh is released causes cargo check to return an error. Ignore for now
                     (0,_command__WEBPACK_IMPORTED_MODULE_4__.sh)("cargo check", { cwd: workspace, check: false });
-                    (0,_command__WEBPACK_IMPORTED_MODULE_4__.sh)(`git commit Cargo.toml Cargo.toml.in Cargo.lock --message 'chore: Bump \`${input.bumpDepsRegExp}\` version to \`${input.bumpDepsVersion}\`'`, gitOptions);
+                    (0,_command__WEBPACK_IMPORTED_MODULE_4__.sh)(`git commit Cargo.lock --message 'chore: Update Cargo.lock to \`${input.bumpDepsVersion}\`'`, gitOptions);
+                    // Update build-resource/opaque-types
+                    await _cargo__WEBPACK_IMPORTED_MODULE_3__/* .bumpDependencies */ .UR(`${workspace}/build-resources/opaque-types/Cargo.toml`, input.bumpDepsRegExp, input.bumpDepsVersion, false, input.bumpDepsBranch);
+                    // Update lockfile for build-resources/opaque-types
+                    // FIXME: Bumping the version before zenoh is released causes cargo check to return an error. Ignore for now
+                    (0,_command__WEBPACK_IMPORTED_MODULE_4__.sh)("cargo check --manifest-path build-resources/opaque-types/Cargo.toml", { cwd: workspace, check: false });
+                    (0,_command__WEBPACK_IMPORTED_MODULE_4__.sh)(`git commit build-resources/opaque-types/ --message 'chore: Bump build-resources/opaque-types version to \`${input.bumpDepsVersion}\`'`, gitOptions);
                 }
             }
         }
