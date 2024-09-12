@@ -27,6 +27,8 @@ on:
       bump-deps-branch:
         type: string
         required: false
+    secrets:
+      BOT_TOKEN_WORKFLOW: ${{ secrets.BOT_TOKEN_WORKFLOW }}
     outputs:
       branch:
         value: ${{ jobs.main.outputs.branch }}
