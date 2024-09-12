@@ -28,7 +28,8 @@ on:
         type: string
         required: false
     secrets:
-      BOT_TOKEN_WORKFLOW: ${{ secrets.BOT_TOKEN_WORKFLOW }}
+      BOT_TOKEN_WORKFLOW:
+        required: false
     outputs:
       branch:
         value: ${{ jobs.main.outputs.branch }}
