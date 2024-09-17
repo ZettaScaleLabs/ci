@@ -25,6 +25,9 @@ on:
         type: boolean
         required: false
         default: false
+    secrets:
+      BOT_TOKEN_WORKFLOW:
+        required: false
   workflow_dispatch:
     inputs:
       repo:

@@ -19,6 +19,9 @@ on:
         type: string
         required: false
         default: '[]'
+    secrets:
+      BOT_TOKEN_WORKFLOW:
+        required: false
   workflow_dispatch:
     inputs:
       repo:

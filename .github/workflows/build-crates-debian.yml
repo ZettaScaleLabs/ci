@@ -12,6 +12,9 @@ on:
       branch:
         type: string
         required: true
+    secrets:
+      BOT_TOKEN_WORKFLOW:
+        required: false
   workflow_dispatch:
     inputs:
       repo:
