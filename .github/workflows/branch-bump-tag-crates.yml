@@ -27,6 +27,9 @@ on:
       bump-deps-branch:
         type: string
         required: false
+      runs-on:
+        type: string
+        default: '["ubuntu-latest"]'
     secrets:
       BOT_TOKEN_WORKFLOW:
         required: false
@@ -64,7 +67,7 @@ on:
 
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     outputs:
       version: ${{ steps.create-release-branch.outputs.version }}
       branch: ${{ steps.create-release-branch.outputs.branch }}

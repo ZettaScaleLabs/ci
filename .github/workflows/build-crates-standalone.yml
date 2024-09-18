@@ -19,6 +19,9 @@ on:
         type: string
         required: false
         default: '[]'
+      runs-on:
+        type: string
+        required: false
     secrets:
       BOT_TOKEN_WORKFLOW:
         required: false
@@ -43,7 +46,7 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.build.os }}
+    runs-on: [ "${{ matrix.build.os }}", "${{ fromJSON(inputs.runs-on )}}" ]
     strategy:
       fail-fast: false
       matrix:
