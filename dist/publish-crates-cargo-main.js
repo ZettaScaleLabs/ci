@@ -81436,7 +81436,7 @@ function sh(cmd, options) {
     if (options.check && returns.status != 0) {
         throw new Error(`\`${cmd}\` failed with status code ${returns.status}:\n${returns.stderr}`);
     }
-    return { stdout: returns.stdout, stderr: returns.stderr };
+    return { stdout: returns.stdout, stderr: returns.stderr, status: returns.status };
 }
 function exec(program, args, options) {
     options = options != null ? options : {};
@@ -81472,7 +81472,7 @@ function exec(program, args, options) {
     if (options.check && returns.status != 0) {
         throw new Error(`\`${program}(${args.join(", ")})\` failed with status code ${returns.status}:\n${returns.stderr}`);
     }
-    return returns.stdout;
+    return { stdout: returns.stdout, stderr: returns.stderr, status: returns.status };
 }
 
 
@@ -81749,19 +81749,19 @@ class TOML {
     }
     get(path, key) {
         const query = key == undefined ? "." : key.join(".");
-        return JSON.parse((0,_command__WEBPACK_IMPORTED_MODULE_1__/* .exec */ .G)("toml", ["get", path, query]));
+        return JSON.parse((0,_command__WEBPACK_IMPORTED_MODULE_1__/* .exec */ .G)("toml", ["get", path, query]).stdout);
     }
     exists(path, key) {
         const query = key == undefined ? "." : key.join(".");
-        return (0,_command__WEBPACK_IMPORTED_MODULE_1__/* .exec */ .G)("toml", ["get", path, query]) != "";
+        return (0,_command__WEBPACK_IMPORTED_MODULE_1__/* .exec */ .G)("toml", ["get", path, query], { check: false }).status === 0;
     }
     async set(path, key, value) {
         const query = key.join(".");
-        await fs_promises__WEBPACK_IMPORTED_MODULE_0__.writeFile(path, (0,_command__WEBPACK_IMPORTED_MODULE_1__/* .exec */ .G)("toml", ["set", path, query, value]));
+        await fs_promises__WEBPACK_IMPORTED_MODULE_0__.writeFile(path, (0,_command__WEBPACK_IMPORTED_MODULE_1__/* .exec */ .G)("toml", ["set", path, query, value]).stdout);
     }
     async unset(path, key) {
         const query = key.join(".");
-        await fs_promises__WEBPACK_IMPORTED_MODULE_0__.writeFile(path, (0,_command__WEBPACK_IMPORTED_MODULE_1__/* .exec */ .G)("toml", ["unset", path, query]));
+        await fs_promises__WEBPACK_IMPORTED_MODULE_0__.writeFile(path, (0,_command__WEBPACK_IMPORTED_MODULE_1__/* .exec */ .G)("toml", ["unset", path, query]).stdout);
     }
 }
 

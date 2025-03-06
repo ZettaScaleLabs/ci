@@ -24992,7 +24992,7 @@ function command_sh(cmd, options) {
     if (options.check && returns.status != 0) {
         throw new Error(`\`${cmd}\` failed with status code ${returns.status}:\n${returns.stderr}`);
     }
-    return { stdout: returns.stdout, stderr: returns.stderr };
+    return { stdout: returns.stdout, stderr: returns.stderr, status: returns.status };
 }
 function exec(program, args, options) {
     options = options != null ? options : {};
@@ -25028,7 +25028,7 @@ function exec(program, args, options) {
     if (options.check && returns.status != 0) {
         throw new Error(`\`${program}(${args.join(", ")})\` failed with status code ${returns.status}:\n${returns.stderr}`);
     }
-    return returns.stdout;
+    return { stdout: returns.stdout, stderr: returns.stderr, status: returns.status };
 }
 
 ;// CONCATENATED MODULE: ./src/git.ts

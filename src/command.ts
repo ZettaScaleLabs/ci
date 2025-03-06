@@ -14,6 +14,7 @@ export type CommandOptions = {
 export type CommandOutput = {
   stdout: string;
   stderr: string;
+  status: number;
 };
 
 export function sh(cmd: string, options?: CommandOptions): CommandOutput {
@@ -57,10 +58,10 @@ export function sh(cmd: string, options?: CommandOptions): CommandOutput {
     throw new Error(`\`${cmd}\` failed with status code ${returns.status}:\n${returns.stderr}`);
   }
 
-  return { stdout: returns.stdout, stderr: returns.stderr };
+  return { stdout: returns.stdout, stderr: returns.stderr, status: returns.status };
 }
 
-export function exec(program: string, args: string[], options?: CommandOptions): string {
+export function exec(program: string, args: string[], options?: CommandOptions): CommandOutput {
   options = options != null ? options : {};
   options.env = options.env != null ? options.env : {};
   options.cwd = options.cwd != null ? options.cwd : ".";
@@ -101,5 +102,5 @@ export function exec(program: string, args: string[], options?: CommandOptions):
     throw new Error(`\`${program}(${args.join(", ")})\` failed with status code ${returns.status}:\n${returns.stderr}`);
   }
 
-  return returns.stdout;
+  return { stdout: returns.stdout, stderr: returns.stderr, status: returns.status };
 }

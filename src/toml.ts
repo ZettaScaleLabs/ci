@@ -11,21 +11,21 @@ export class TOML {
 
   get(path: string, key?: string[]): unknown {
     const query = key == undefined ? "." : key.join(".");
-    return JSON.parse(exec("toml", ["get", path, query]));
+    return JSON.parse(exec("toml", ["get", path, query]).stdout);
   }
 
   exists(path: string, key?: string[]): unknown {
     const query = key == undefined ? "." : key.join(".");
-    return exec("toml", ["get", path, query]) != "";
+    return exec("toml", ["get", path, query], { check: false }).status === 0;
   }
 
   async set(path: string, key: string[], value: string) {
     const query = key.join(".");
-    await fs.writeFile(path, exec("toml", ["set", path, query, value]));
+    await fs.writeFile(path, exec("toml", ["set", path, query, value]).stdout);
   }
 
   async unset(path: string, key: string[]) {
     const query = key.join(".");
-    await fs.writeFile(path, exec("toml", ["unset", path, query]));
+    await fs.writeFile(path, exec("toml", ["unset", path, query]).stdout);
   }
 }
