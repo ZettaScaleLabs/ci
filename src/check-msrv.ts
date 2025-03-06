@@ -30,7 +30,7 @@ export function setup(): Input {
 }
 
 function msrv(min: string, package_: cargo.Package, ignoreLockfile: boolean = false): string | null {
-  let command = ["cargo", "msrv", "find", "--output-format", "json", "--log-level", "trace", "log-target", "stdout", "--min", min, "--manifest-path", package_.manifestPath];
+  let command = ["cargo", "msrv", "find", "--output-format", "json", "--min", min, "--manifest-path", package_.manifestPath];
   if (ignoreLockfile) {
     command.push("--ignore-lockfile");
   }
@@ -71,6 +71,7 @@ export async function main(input: Input) {
           continue;
         }
         rustVersion = rustVersionRaw;
+        toml.unset(package_.manifestPath, rustVersionField);
       }
 
       const msrv1 = msrv(min, package_, false);
