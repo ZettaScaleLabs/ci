@@ -81434,6 +81434,22 @@ function setup() {
         githubToken: githubToken == "" ? undefined : githubToken,
     };
 }
+function msrv(min, package_, ignoreLockfile = false) {
+    let command = ["cargo", "msrv", "find", "--output-format", "json", "--log-level", "trace", "log-target", "stdout", "--min", min, "--manifest-path", package_.manifestPath];
+    if (ignoreLockfile) {
+        command.push("--ignore-lockfile");
+    }
+    const output = (0,_command__WEBPACK_IMPORTED_MODULE_2__.sh)(command.join(" "));
+    const conclusion = JSON.parse(output.stderr.trim().split("\n").pop());
+    const result = conclusion["result"];
+    const success = result["success"];
+    if (!success) {
+        return null;
+    }
+    else {
+        return result["version"];
+    }
+}
 async function main(input) {
     try {
         await _cargo__WEBPACK_IMPORTED_MODULE_1__/* .installBinaryCached */ .Mj("cargo-msrv");
@@ -81454,26 +81470,18 @@ async function main(input) {
                 }
                 rustVersion = rustVersionRaw;
             }
-            const output = (0,_command__WEBPACK_IMPORTED_MODULE_2__.sh)(`cargo msrv find --output-format json --log-level trace --log-target stdout --min ${min} --manifest-path ${package_.manifestPath}`);
-            const conclusion = JSON.parse(output.stderr.trim().split("\n").pop());
-            const result = conclusion["result"];
-            const success = result["success"];
-            if (!success) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`The MSRV of package ${package_.name} could not be found`);
-                failed = true;
-                continue;
-            }
-            const msrv = result["version"];
+            const msrv1 = msrv(min, package_, false);
+            const msrv2 = msrv(min, package_, true);
             if (rustVersion === null) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`The MSRV of package \`${package_.name}\` is ${msrv} (but its \`rust-version\` is undefined)`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`The MSRV of package \`${package_.name}\` is ${msrv1}/${msrv2} (but its \`rust-version\` is undefined)`);
             }
             else {
-                if (rustVersion < msrv) {
-                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is less than its MSRV (${msrv})`);
+                if (rustVersion < msrv1 || rustVersion < msrv2) {
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is less than its MSRV (${msrv1}/${msrv2})`);
                     failed = true;
                 }
-                if (rustVersion > msrv) {
-                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is greater than its MSRV (${msrv})`);
+                if (rustVersion > msrv1 || rustVersion > msrv2) {
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is greater than its MSRV (${msrv1}/${msrv2})`);
                 }
             }
         }

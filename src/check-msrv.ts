@@ -29,6 +29,22 @@ export function setup(): Input {
   };
 }
 
+function msrv(min: string, package_: cargo.Package, ignoreLockfile: boolean = false): string | null {
+  let command = ["cargo", "msrv", "find", "--output-format", "json", "--log-level", "trace", "log-target", "stdout", "--min", min, "--manifest-path", package_.manifestPath];
+  if (ignoreLockfile) {
+    command.push("--ignore-lockfile");
+  }
+  const output = sh(command.join(" "));
+  const conclusion = JSON.parse(output.stderr.trim().split("\n").pop()) as Record<string, unknown>;
+  const result = conclusion["result"] as Record<string, unknown>;
+  const success = result["success"] as boolean;
+  if (!success) {
+    return null;
+  } else {
+    return result["version"] as string;
+  }
+}
+
 export async function main(input: Input) {
   try {
     await cargo.installBinaryCached("cargo-msrv");
@@ -57,34 +73,24 @@ export async function main(input: Input) {
         rustVersion = rustVersionRaw;
       }
 
-      const output = sh(
-        `cargo msrv find --output-format json --log-level trace --log-target stdout --min ${min} --manifest-path ${package_.manifestPath}`,
-      );
-      const conclusion = JSON.parse(output.stderr.trim().split("\n").pop()) as Record<string, unknown>;
-      const result = conclusion["result"] as Record<string, unknown>;
-      const success = result["success"] as boolean;
-      if (!success) {
-        core.error(`The MSRV of package ${package_.name} could not be found`);
-        failed = true;
-        continue;
-      }
-      const msrv = result["version"] as string;
+      const msrv1 = msrv(min, package_, false);
+      const msrv2 = msrv(min, package_, true);
 
       if (rustVersion === null) {
         core.notice(
-          `The MSRV of package \`${package_.name}\` is ${msrv} (but its \`rust-version\` is undefined)`,
+          `The MSRV of package \`${package_.name}\` is ${msrv1}/${msrv2} (but its \`rust-version\` is undefined)`,
         );
       } else {
-        if (rustVersion < msrv) {
+        if (rustVersion < msrv1 || rustVersion < msrv2) {
           core.error(
-            `The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is less than its MSRV (${msrv})`,
+            `The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is less than its MSRV (${msrv1}/${msrv2})`,
           );
           failed = true;
         }
-  
-        if (rustVersion > msrv) {
+
+        if (rustVersion > msrv1 || rustVersion > msrv2) {
           core.notice(
-            `The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is greater than its MSRV (${msrv})`,
+            `The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is greater than its MSRV (${msrv1}/${msrv2})`,
           );
         }
       }
