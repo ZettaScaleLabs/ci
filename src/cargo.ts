@@ -295,7 +295,7 @@ export async function installBinaryCached(name: string) {
   if (process.env["GITHUB_ACTIONS"] != undefined) {
     const paths = [join(os.homedir(), ".cargo", "bin")];
     const version = config.lock.cratesio[name];
-    const key = `${os.platform()}-${os.release()}-${os.arch()}-${name}-${version}-invalidate-temporarily`;
+    const key = `${os.platform()}-${os.release()}-${os.arch()}-${name}-${version}-invalidate-temporarily2`;
 
     // NOTE: We specify the Stable toolchain to override the current Rust
     // toolchain file in the current directory, as the caller can use this
