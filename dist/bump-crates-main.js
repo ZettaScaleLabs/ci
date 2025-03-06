@@ -81645,6 +81645,10 @@ class TOML {
         const query = key == undefined ? "." : key.join(".");
         return JSON.parse((0,_command__WEBPACK_IMPORTED_MODULE_1__/* .exec */ .G)("toml", ["get", path, query]));
     }
+    exists(path, key) {
+        const query = key == undefined ? "." : key.join(".");
+        return (0,_command__WEBPACK_IMPORTED_MODULE_1__/* .exec */ .G)("toml", ["get", path, query]) != "";
+    }
     async set(path, key, value) {
         const query = key.join(".");
         await fs_promises__WEBPACK_IMPORTED_MODULE_0__.writeFile(path, (0,_command__WEBPACK_IMPORTED_MODULE_1__/* .exec */ .G)("toml", ["set", path, query, value]));

@@ -14,6 +14,11 @@ export class TOML {
     return JSON.parse(exec("toml", ["get", path, query]));
   }
 
+  exists(path: string, key?: string[]): unknown {
+    const query = key == undefined ? "." : key.join(".");
+    return exec("toml", ["get", path, query]) != "";
+  }
+
   async set(path: string, key: string[], value: string) {
     const query = key.join(".");
     await fs.writeFile(path, exec("toml", ["set", path, query, value]));

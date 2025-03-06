@@ -81438,17 +81438,23 @@ async function main(input) {
     try {
         await _cargo__WEBPACK_IMPORTED_MODULE_1__/* .installBinaryCached */ .Mj("cargo-msrv");
         const min = input.min ?? DEFAULT_MIN_MSRV;
+        const rustVersionField = ["package", "rust-version"];
         let failed = false;
         for (const package_ of _cargo__WEBPACK_IMPORTED_MODULE_1__/* .packages */ .B9(process.cwd())) {
-            const rustVersionField = ["package", "rust-version"];
-            const rustVersionRaw = toml.get(package_.manifestPath, rustVersionField);
-            if (typeof rustVersionRaw !== "string") {
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`Cargo Manifest field \`package.rust-version\` should be a string, instead it evaluates to: \`${JSON.stringify(rustVersionRaw)}\``);
-                failed = true;
-                continue;
+            let rustVersion = null;
+            if (!toml.exists(package_.manifestPath, rustVersionField)) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.warning(`The \`rust-version\` of package \`${package_.name}\` is not defined`);
             }
-            const rustVersion = rustVersionRaw;
-            const output = (0,_command__WEBPACK_IMPORTED_MODULE_2__.sh)(`cargo msrv --output-format json --log-level trace --log-target stdout --min ${min} --manifest-path ${package_.manifestPath}`);
+            else {
+                const rustVersionRaw = toml.get(package_.manifestPath, rustVersionField);
+                if (typeof rustVersionRaw !== "string") {
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`Cargo Manifest field \`package.rust-version\` should be a string, instead it evaluates to: \`${JSON.stringify(rustVersionRaw)}\``);
+                    failed = true;
+                    continue;
+                }
+                rustVersion = rustVersionRaw;
+            }
+            const output = (0,_command__WEBPACK_IMPORTED_MODULE_2__.sh)(`cargo msrv find --output-format json --log-level trace --log-target stdout --min ${min} --manifest-path ${package_.manifestPath}`);
             const conclusion = JSON.parse(output.stderr.trim().split("\n").pop());
             const result = conclusion["result"];
             const success = result["success"];
@@ -81458,12 +81464,17 @@ async function main(input) {
                 continue;
             }
             const msrv = result["version"];
-            if (rustVersion < msrv) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is less than its MSRV (${msrv})`);
-                failed = true;
+            if (rustVersion === null) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`The MSRV of package \`${package_.name}\` is ${msrv} (but its \`rust-version\` is undefined)`);
             }
-            if (rustVersion > msrv) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is greater than its MSRV (${msrv})`);
+            else {
+                if (rustVersion < msrv) {
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is less than its MSRV (${msrv})`);
+                    failed = true;
+                }
+                if (rustVersion > msrv) {
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is greater than its MSRV (${msrv})`);
+                }
             }
         }
         if (failed) {
@@ -81624,6 +81635,10 @@ class TOML {
     get(path, key) {
         const query = key == undefined ? "." : key.join(".");
         return JSON.parse((0,_command__WEBPACK_IMPORTED_MODULE_1__/* .exec */ .G)("toml", ["get", path, query]));
+    }
+    exists(path, key) {
+        const query = key == undefined ? "." : key.join(".");
+        return (0,_command__WEBPACK_IMPORTED_MODULE_1__/* .exec */ .G)("toml", ["get", path, query]) != "";
     }
     async set(path, key, value) {
         const query = key.join(".");

@@ -34,22 +34,31 @@ export async function main(input: Input) {
     await cargo.installBinaryCached("cargo-msrv");
 
     const min = input.min ?? DEFAULT_MIN_MSRV;
+    const rustVersionField = ["package", "rust-version"];
 
     let failed = false;
+
     for (const package_ of cargo.packages(process.cwd())) {
-      const rustVersionField = ["package", "rust-version"];
-      const rustVersionRaw = toml.get(package_.manifestPath, rustVersionField);
-      if (typeof rustVersionRaw !== "string") {
-        core.error(
-          `Cargo Manifest field \`package.rust-version\` should be a string, instead it evaluates to: \`${JSON.stringify(rustVersionRaw)}\``,
+      let rustVersion = null;
+      if (!toml.exists(package_.manifestPath, rustVersionField)) {
+        core.warning(
+          `The \`rust-version\` of package \`${package_.name}\` is not defined`,
         );
-        failed = true;
-        continue;
+      } else {
+        const rustVersionRaw = toml.get(package_.manifestPath, rustVersionField);
+
+        if (typeof rustVersionRaw !== "string") {
+          core.error(
+            `Cargo Manifest field \`package.rust-version\` should be a string, instead it evaluates to: \`${JSON.stringify(rustVersionRaw)}\``,
+          );
+          failed = true;
+          continue;
+        }
+        rustVersion = rustVersionRaw;
       }
-      const rustVersion = rustVersionRaw;
 
       const output = sh(
-        `cargo msrv --output-format json --log-level trace --log-target stdout --min ${min} --manifest-path ${package_.manifestPath}`,
+        `cargo msrv find --output-format json --log-level trace --log-target stdout --min ${min} --manifest-path ${package_.manifestPath}`,
       );
       const conclusion = JSON.parse(output.stderr.trim().split("\n").pop()) as Record<string, unknown>;
       const result = conclusion["result"] as Record<string, unknown>;
@@ -61,17 +70,23 @@ export async function main(input: Input) {
       }
       const msrv = result["version"] as string;
 
-      if (rustVersion < msrv) {
-        core.error(
-          `The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is less than its MSRV (${msrv})`,
-        );
-        failed = true;
-      }
-
-      if (rustVersion > msrv) {
+      if (rustVersion === null) {
         core.notice(
-          `The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is greater than its MSRV (${msrv})`,
+          `The MSRV of package \`${package_.name}\` is ${msrv} (but its \`rust-version\` is undefined)`,
         );
+      } else {
+        if (rustVersion < msrv) {
+          core.error(
+            `The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is less than its MSRV (${msrv})`,
+          );
+          failed = true;
+        }
+  
+        if (rustVersion > msrv) {
+          core.notice(
+            `The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is greater than its MSRV (${msrv})`,
+          );
+        }
       }
     }
 
