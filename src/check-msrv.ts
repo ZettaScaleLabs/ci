@@ -34,7 +34,8 @@ function msrv(min: string, package_: cargo.Package, ignoreLockfile: boolean = fa
   if (ignoreLockfile) {
     command.push("--ignore-lockfile");
   }
-  const output = sh(command.join(" "));
+  const output = sh(command.join(" "), { check: false });
+  if (output.status !== 0) { return null };
   const conclusion = JSON.parse(output.stderr.trim().split("\n").pop()) as Record<string, unknown>;
   const result = conclusion["result"] as Record<string, unknown>;
   const success = result["success"] as boolean;
@@ -58,7 +59,7 @@ export async function main(input: Input) {
       let rustVersion = null;
       if (!toml.exists(package_.manifestPath, rustVersionField)) {
         core.warning(
-          `The \`rust-version\` of package \`${package_.name}\` is not defined`,
+          `\`rust-version\` of package \`${package_.name}\` is undefined`,
         );
       } else {
         const rustVersionRaw = toml.get(package_.manifestPath, rustVersionField);
@@ -74,24 +75,37 @@ export async function main(input: Input) {
         toml.unset(package_.manifestPath, rustVersionField);
       }
 
-      const msrv1 = msrv(min, package_, false);
-      const msrv2 = msrv(min, package_, true);
+      const msrvLocked = msrv(min, package_, false);
+      if (msrvLocked === null) {
+        core.error(`Failed to compute the MSRV of package \`${package_.name}\` w/ lockfile`);
+        failed = true;
+        continue;
+      }
+      const msrvUnlocked = msrv(min, package_, true);
+      if (msrvLocked === null) {
+        core.error(`Failed to compute the MSRV of package \`${package_.name}\` w/o lockfile`);
+        failed = true;
+        continue;
+      }
 
-      if (rustVersion === null) {
-        core.notice(
-          `The MSRV of package \`${package_.name}\` is ${msrv1}/${msrv2} (but its \`rust-version\` is undefined)`,
-        );
+      if (msrvLocked != msrvUnlocked) {
+        core.notice(`MSRV of package \`${package_.name}\` w/ lockfile (${msrvLocked}) while its MSRV w/o lockfile (${msrvUnlocked})`);
       } else {
-        if (rustVersion < msrv1 || rustVersion < msrv2) {
+        core.notice(`MSRV of package \`${package_.name}\` is ${msrvLocked}`);
+      }
+
+      if (rustVersion !== null) {
+        const msrvMax = Math.max(Number(msrvLocked), Number(msrvUnlocked));
+        if (rustVersion < msrvMax) {
           core.error(
-            `The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is less than its MSRV (${msrv1}/${msrv2})`,
+            `\`rust-version\` (${rustVersion}) of package \`${package_.name}\` is less than its maximal MSRV (${msrvMax})`,
           );
           failed = true;
         }
 
-        if (rustVersion > msrv1 || rustVersion > msrv2) {
+        if (rustVersion > msrvMax) {
           core.notice(
-            `The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is greater than its MSRV (${msrv1}/${msrv2})`,
+            `\`rust-version\` (${rustVersion}) of package \`${package_.name}\` is greater than its maximal MSRV (${msrvMax})`,
           );
         }
       }

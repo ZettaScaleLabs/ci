@@ -81439,7 +81439,11 @@ function msrv(min, package_, ignoreLockfile = false) {
     if (ignoreLockfile) {
         command.push("--ignore-lockfile");
     }
-    const output = (0,_command__WEBPACK_IMPORTED_MODULE_2__.sh)(command.join(" "));
+    const output = (0,_command__WEBPACK_IMPORTED_MODULE_2__.sh)(command.join(" "), { check: false });
+    if (output.status !== 0) {
+        return null;
+    }
+    ;
     const conclusion = JSON.parse(output.stderr.trim().split("\n").pop());
     const result = conclusion["result"];
     const success = result["success"];
@@ -81459,7 +81463,7 @@ async function main(input) {
         for (const package_ of _cargo__WEBPACK_IMPORTED_MODULE_1__/* .packages */ .B9(process.cwd())) {
             let rustVersion = null;
             if (!toml.exists(package_.manifestPath, rustVersionField)) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.warning(`The \`rust-version\` of package \`${package_.name}\` is not defined`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.warning(`\`rust-version\` of package \`${package_.name}\` is undefined`);
             }
             else {
                 const rustVersionRaw = toml.get(package_.manifestPath, rustVersionField);
@@ -81471,18 +81475,32 @@ async function main(input) {
                 rustVersion = rustVersionRaw;
                 toml.unset(package_.manifestPath, rustVersionField);
             }
-            const msrv1 = msrv(min, package_, false);
-            const msrv2 = msrv(min, package_, true);
-            if (rustVersion === null) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`The MSRV of package \`${package_.name}\` is ${msrv1}/${msrv2} (but its \`rust-version\` is undefined)`);
+            const msrvLocked = msrv(min, package_, false);
+            if (msrvLocked === null) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`Failed to compute the MSRV of package \`${package_.name}\` w/ lockfile`);
+                failed = true;
+                continue;
+            }
+            const msrvUnlocked = msrv(min, package_, true);
+            if (msrvLocked === null) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`Failed to compute the MSRV of package \`${package_.name}\` w/o lockfile`);
+                failed = true;
+                continue;
+            }
+            if (msrvLocked != msrvUnlocked) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`MSRV of package \`${package_.name}\` w/ lockfile (${msrvLocked}) while its MSRV w/o lockfile (${msrvUnlocked})`);
             }
             else {
-                if (rustVersion < msrv1 || rustVersion < msrv2) {
-                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is less than its MSRV (${msrv1}/${msrv2})`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`MSRV of package \`${package_.name}\` is ${msrvLocked}`);
+            }
+            if (rustVersion !== null) {
+                const msrvMax = Math.max(Number(msrvLocked), Number(msrvUnlocked));
+                if (rustVersion < msrvMax) {
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`\`rust-version\` (${rustVersion}) of package \`${package_.name}\` is less than its maximal MSRV (${msrvMax})`);
                     failed = true;
                 }
-                if (rustVersion > msrv1 || rustVersion > msrv2) {
-                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`The \`rust-version\` (${rustVersion}) of package \`${package_.name}\` is greater than its MSRV (${msrv1}/${msrv2})`);
+                if (rustVersion > msrvMax) {
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`\`rust-version\` (${rustVersion}) of package \`${package_.name}\` is greater than its maximal MSRV (${msrvMax})`);
                 }
             }
         }
