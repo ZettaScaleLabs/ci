@@ -81105,6 +81105,7 @@ function packages(path) {
             version: elem.version,
             manifestPath: elem.manifest_path,
             publish: elem.publish == null ? undefined : false,
+            rustVersion: elem.publish == null ? undefined : elem.rust_version,
             workspaceDependencies: elem.dependencies
                 .filter(dep => "path" in dep)
                 .map(dep => ({
@@ -81435,6 +81436,7 @@ function setup() {
     };
 }
 function msrv(min, package_, ignoreLockfile = false) {
+    (0,_command__WEBPACK_IMPORTED_MODULE_2__.sh)(`cat ${package_.manifestPath}`);
     let command = ["cargo", "msrv", "find", "--output-format", "json", "--min", min, "--manifest-path", package_.manifestPath];
     if (ignoreLockfile) {
         command.push("--ignore-lockfile");
@@ -81460,21 +81462,16 @@ async function main(input) {
         const min = input.min ?? DEFAULT_MIN_MSRV;
         const rustVersionField = ["package", "rust-version"];
         let failed = false;
-        for (const package_ of _cargo__WEBPACK_IMPORTED_MODULE_1__/* .packages */ .B9(process.cwd())) {
-            let rustVersion = null;
-            if (!toml.exists(package_.manifestPath, rustVersionField)) {
+        const packages = _cargo__WEBPACK_IMPORTED_MODULE_1__/* .packages */ .B9(process.cwd());
+        for (const package_ of packages) {
+            if (package_.rustVersion === undefined) {
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.warning(`\`rust-version\` of package \`${package_.name}\` is undefined`);
             }
             else {
-                const rustVersionRaw = toml.get(package_.manifestPath, rustVersionField);
-                if (typeof rustVersionRaw !== "string") {
-                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`Cargo Manifest field \`package.rust-version\` should be a string, instead it evaluates to: \`${JSON.stringify(rustVersionRaw)}\``);
-                    failed = true;
-                    continue;
-                }
-                rustVersion = rustVersionRaw;
-                toml.unset(package_.manifestPath, rustVersionField);
+                await toml.unset(package_.manifestPath, rustVersionField);
             }
+        }
+        for (const package_ of packages) {
             const msrvLocked = msrv(min, package_, false);
             if (msrvLocked === null) {
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`Failed to compute the MSRV of package \`${package_.name}\` w/ lockfile`);
@@ -81488,19 +81485,19 @@ async function main(input) {
                 continue;
             }
             if (msrvLocked != msrvUnlocked) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`MSRV of package \`${package_.name}\` w/ lockfile (${msrvLocked}) while its MSRV w/o lockfile (${msrvUnlocked})`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`MSRV of package \`${package_.name}\` w/ lockfile is (${msrvLocked}) while its MSRV w/o lockfile is (${msrvUnlocked})`);
             }
             else {
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`MSRV of package \`${package_.name}\` is ${msrvLocked}`);
             }
-            if (rustVersion !== null) {
+            if (package_.rustVersion !== null) {
                 const msrvMax = Math.max(Number(msrvLocked), Number(msrvUnlocked));
-                if (rustVersion < msrvMax) {
-                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`\`rust-version\` (${rustVersion}) of package \`${package_.name}\` is less than its maximal MSRV (${msrvMax})`);
+                if (Number(package_.rustVersion) < msrvMax) {
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(`\`rust-version\` (${package_.rustVersion}) of package \`${package_.name}\` is less than its maximal MSRV (${msrvMax})`);
                     failed = true;
                 }
-                if (rustVersion > msrvMax) {
-                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`\`rust-version\` (${rustVersion}) of package \`${package_.name}\` is greater than its maximal MSRV (${msrvMax})`);
+                if (Number(package_.rustVersion) > msrvMax) {
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`\`rust-version\` (${package_.rustVersion}) of package \`${package_.name}\` is greater than its maximal MSRV (${msrvMax})`);
                 }
             }
         }

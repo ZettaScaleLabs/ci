@@ -30,6 +30,7 @@ export function setup(): Input {
 }
 
 function msrv(min: string, package_: cargo.Package, ignoreLockfile: boolean = false): string | null {
+  sh(`cat ${package_.manifestPath}`);
   let command = ["cargo", "msrv", "find", "--output-format", "json", "--min", min, "--manifest-path", package_.manifestPath];
   if (ignoreLockfile) {
     command.push("--ignore-lockfile");
