@@ -81224,7 +81224,7 @@ function packages(path) {
             version: elem.version,
             manifestPath: elem.manifest_path,
             publish: elem.publish == null ? undefined : false,
-            rustVersion: elem.publish == null ? undefined : elem.rust_version,
+            rustVersion: elem.rust_version == null ? undefined : elem.rust_version,
             workspaceDependencies: elem.dependencies
                 .filter(dep => "path" in dep)
                 .map(dep => ({
