@@ -7,7 +7,7 @@ import { mkdtemp, realpath } from "fs/promises";
 import { createWriteStream, rmSync } from "fs";
 import * as https from "https";
 
-import { sh } from "../src/command";
+import { CommandOptions, sh } from "../src/command";
 import * as cargo from "../src/cargo";
 import { TOML } from "../src/toml";
 
@@ -197,4 +197,54 @@ describe("cargo", () => {
     const version = toml.get(path, ["version"]);
     expect(version).toStrictEqual(3);
   });
+
+  test("search published package", async () => {
+    const pkg = {
+      name: "foobar",
+      version: "0.0.0",
+      manifestPath: "Cargo.toml",
+      workspaceDependencies: []
+    } as cargo.Package;
+    expect(cargo.isPublished(pkg)).resolves.toBeTruthy();
+  });
+
+  test("search published package, unpublished version", async () => {
+    const pkg = {
+      name: "foobar",
+      version: "6.6.6",
+      manifestPath: "Cargo.toml",
+      workspaceDependencies: []
+    } as cargo.Package;
+    expect(cargo.isPublished(pkg)).resolves.toBeFalsy();
+  });
+
+  test("search unpublished package, unpublished version", async () => {
+    const pkg = {
+      name: "foobarino",
+      version: "6.6.6",
+      manifestPath: "Cargo.toml",
+      workspaceDependencies: []
+    } as cargo.Package;
+    expect(cargo.isPublished(pkg)).resolves.toBeFalsy();
+  });
+
+  test("search artifactory package", async () => {
+    const env = {
+      CARGO_REGISTRIES_ARTIFACTORY_TOKEN: process.env["CARGO_REGISTRIES_ARTIFACTORY_TOKEN"],
+      CARGO_REGISTRIES_ARTIFACTORY_INDEX: "https://zettascale.jfrog.io/artifactory/api/cargo/zetta-private",
+      CARGO_REGISTRY_GLOBAL_CREDENTIAL_PROVIDERS: "cargo:token",
+      CARGO_REGISTRY_DEFAULT: "artifactory",
+    };
+    const options = {
+      env: env
+    } as CommandOptions
+    const pkg = {
+      name: "foobarino",
+      version: "6.6.6",
+      manifestPath: "Cargo.toml",
+      workspaceDependencies: []
+    } as cargo.Package;
+    expect(cargo.isPublished(pkg, options)).resolves.toBeFalsy();
+  });
+
 });
