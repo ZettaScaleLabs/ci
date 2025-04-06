@@ -55,6 +55,12 @@ export async function main(input: Input) {
       clone(input, input.repo, input.branch);
       const path = getPath(input);
       const options = {
+        env: {
+          CARGO_REGISTRIES_ARTIFACTORY_TOKEN: input.artifactoryToken,
+          CARGO_REGISTRIES_ARTIFACTORY_INDEX: input.artifactoryIndex,
+          CARGO_REGISTRY_GLOBAL_CREDENTIAL_PROVIDERS: "cargo:token",
+          CARGO_REGISTRY_DEFAULT: "artifactory",
+        },
         cwd: path,
         check: true,
       };
