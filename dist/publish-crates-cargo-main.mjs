@@ -78197,21 +78197,24 @@ var core3 = __toESM(require_core(), 1);
 var import_crates = __toESM(require_dist4(), 1);
 var Registry = class {
   client;
+  apiUrl;
   constructor() {
     if (process.env.CARGO_REGISTRIES_ARTIFACTORY_TOKEN) {
       this.client = new import_crates.CratesIO(process.env.CARGO_REGISTRIES_ARTIFACTORY_TOKEN);
     } else {
       this.client = new import_crates.CratesIO();
+      this.apiUrl = "https://crates.io/api/v1";
     }
   }
   async init() {
     if (process.env.CARGO_REGISTRIES_ARTIFACTORY_TOKEN && process.env.CARGO_REGISTRIES_ARTIFACTORY_INDEX) {
       const apiUrl = await this.getApiUrl();
       this.client.setApiUrl(apiUrl);
+      this.apiUrl = apiUrl;
     }
   }
   async isPublished(pkg) {
-    core3.startGroup(`Query registry for package ${pkg.name} version: ${pkg.version}`);
+    core3.startGroup(`Query registry ${this.apiUrl} for package ${pkg.name} version: ${pkg.version}`);
     let crateResult;
     try {
       crateResult = await this.client.api.crates.getCrate(pkg.name);

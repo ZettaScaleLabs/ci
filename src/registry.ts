@@ -9,12 +9,14 @@ type RegistryConfig = {
 
 export class Registry {
   client: CratesIO;
+  apiUrl: string;
   constructor() {
     if (process.env.CARGO_REGISTRIES_ARTIFACTORY_TOKEN) {
       this.client = new CratesIO(process.env.CARGO_REGISTRIES_ARTIFACTORY_TOKEN);
     } else {
       // fallback to crates.io without authentication
       this.client = new CratesIO();
+      this.apiUrl = 'https://crates.io/api/v1'
     }
   }
 
@@ -22,11 +24,12 @@ export class Registry {
     if (process.env.CARGO_REGISTRIES_ARTIFACTORY_TOKEN && process.env.CARGO_REGISTRIES_ARTIFACTORY_INDEX) {
       const apiUrl = await this.getApiUrl();
       this.client.setApiUrl(apiUrl);
+      this.apiUrl = apiUrl
     }
   }
 
   async isPublished(pkg: cargo.Package): Promise<boolean> {
-    core.startGroup(`Query registry for package ${pkg.name} version: ${pkg.version}`);
+    core.startGroup(`Query registry ${this.apiUrl} for package ${pkg.name} version: ${pkg.version}`);
     let crateResult: CrateResult;
     try {
       crateResult = await this.client.api.crates.getCrate(pkg.name);
