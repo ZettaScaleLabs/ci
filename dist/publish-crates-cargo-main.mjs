@@ -19876,22 +19876,22 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       process.stdout.write(message + os3.EOL);
     }
     exports2.info = info5;
-    function startGroup3(name) {
+    function startGroup4(name) {
       (0, command_1.issue)("group", name);
     }
-    exports2.startGroup = startGroup3;
-    function endGroup3() {
+    exports2.startGroup = startGroup4;
+    function endGroup4() {
       (0, command_1.issue)("endgroup");
     }
-    exports2.endGroup = endGroup3;
+    exports2.endGroup = endGroup4;
     function group(name, fn) {
       return __awaiter6(this, void 0, void 0, function* () {
-        startGroup3(name);
+        startGroup4(name);
         let result;
         try {
           result = yield fn();
         } finally {
-          endGroup3();
+          endGroup4();
         }
         return result;
       });
@@ -78211,6 +78211,7 @@ var Registry = class {
     }
   }
   async isPublished(pkg) {
+    core3.startGroup(`Query registry for package ${pkg.name} version: ${pkg.version}`);
     let crateResult;
     try {
       crateResult = await this.client.api.crates.getCrate(pkg.name);
@@ -78220,8 +78221,10 @@ var Registry = class {
       return false;
     } catch (error) {
       core3.info(`Failed to query registry for ${pkg.name}`);
-      console.log(error);
+      core3.info(error);
       return false;
+    } finally {
+      core3.endGroup();
     }
   }
   async getApiUrl() {
@@ -78297,9 +78300,9 @@ async function main(input) {
         throw new Error("No token provided for publication");
       }
       for (const repo of input.unpublishedDepsRepos) {
-        publishFn(input, repo);
+        await publishFn(input, repo);
       }
-      publishFn(input, input.repo, input.branch);
+      await publishFn(input, input.repo, input.branch);
     }
   } catch (error) {
     if (error instanceof Error) core4.setFailed(error.message);
@@ -78337,7 +78340,7 @@ function getPath(input) {
   core4.info(`Using path ${path}`);
   return path;
 }
-function publishToArtifactory(input, repo, branch) {
+async function publishToArtifactory(input, repo, branch) {
   core4.info("Publishing to Artifactory");
   clone(input, repo, branch);
   const path = getPath(input);
@@ -78347,18 +78350,18 @@ function publishToArtifactory(input, repo, branch) {
     CARGO_REGISTRY_GLOBAL_CREDENTIAL_PROVIDERS: "cargo:token",
     CARGO_REGISTRY_DEFAULT: "artifactory"
   };
-  publish(path, env);
+  await publish(path, env);
 }
-function publishToCratesIo(input, repo, branch) {
+async function publishToCratesIo(input, repo, branch) {
   core4.info("Publishing to CratesIo");
   clone(input, repo, branch);
   const path = repoPath(repo);
   const env = {
     CARGO_REGISTRY_TOKEN: input.cratesIoToken
   };
-  publish(path, env);
+  await publish(path, env);
 }
-function publish(path, env, allowDirty = false) {
+async function publish(path, env, allowDirty = false) {
   const options = {
     env,
     cwd: path,
@@ -78366,7 +78369,7 @@ function publish(path, env, allowDirty = false) {
   };
   for (const package_ of packagesOrdered(path, options)) {
     const registry = new Registry();
-    if (!registry.isPublished(package_) && (package_.publish === void 0 || package_.publish)) {
+    if (!await registry.isPublished(package_) && (package_.publish === void 0 || package_.publish)) {
       const command = ["cargo", "publish", "--locked", "--manifest-path", package_.manifestPath];
       if (allowDirty) {
         command.push("--allow-dirty");

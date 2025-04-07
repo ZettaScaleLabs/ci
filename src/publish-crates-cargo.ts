@@ -75,7 +75,7 @@ export async function main(input: Input) {
     }
 
     if (input.liveRun) {
-      let publishFn: (input: Input, repo: string, branch?: string) => void;
+      let publishFn: (input: Input, repo: string, branch?: string) => Promise<void>;
       if (input.artifactoryToken) {
         publishFn = publishToArtifactory;
       } else if (input.cratesIoToken) {
@@ -85,10 +85,10 @@ export async function main(input: Input) {
       }
 
       for (const repo of input.unpublishedDepsRepos) {
-        publishFn(input, repo);
+        await publishFn(input, repo);
       }
 
-      publishFn(input, input.repo, input.branch);
+      await publishFn(input, input.repo, input.branch);
     }
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message);
@@ -133,7 +133,7 @@ function getPath(input: Input): string {
   return path;
 }
 
-function publishToArtifactory(input: Input, repo: string, branch?: string) {
+async function publishToArtifactory(input: Input, repo: string, branch?: string): Promise<void> {
   core.info("Publishing to Artifactory");
   clone(input, repo, branch);
   const path = getPath(input);
@@ -145,10 +145,10 @@ function publishToArtifactory(input: Input, repo: string, branch?: string) {
     CARGO_REGISTRY_DEFAULT: "artifactory",
   };
 
-  publish(path, env);
+  await publish(path, env);
 }
 
-function publishToCratesIo(input: Input, repo: string, branch?: string) {
+async function publishToCratesIo(input: Input, repo: string, branch?: string): Promise<void> {
   core.info("Publishing to CratesIo");
   clone(input, repo, branch);
   const path = repoPath(repo);
@@ -157,10 +157,10 @@ function publishToCratesIo(input: Input, repo: string, branch?: string) {
     CARGO_REGISTRY_TOKEN: input.cratesIoToken,
   };
 
-  publish(path, env);
+  await publish(path, env);
 }
 
-function publish(path: string, env: NodeJS.ProcessEnv, allowDirty: boolean = false) {
+async function publish(path: string, env: NodeJS.ProcessEnv, allowDirty: boolean = false): Promise<void> {
   const options = {
     env,
     cwd: path,
@@ -170,7 +170,7 @@ function publish(path: string, env: NodeJS.ProcessEnv, allowDirty: boolean = fal
   for (const package_ of cargo.packagesOrdered(path, options)) {
     // Crates.io won't allow packages to be published with the same version
     const registry = new Registry();
-    if (!registry.isPublished(package_) && (package_.publish === undefined || package_.publish)) {
+    if (!(await registry.isPublished(package_)) && (package_.publish === undefined || package_.publish)) {
       const command = ["cargo", "publish", "--locked", "--manifest-path", package_.manifestPath];
       if (allowDirty) {
         command.push("--allow-dirty");
