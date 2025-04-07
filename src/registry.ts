@@ -55,7 +55,7 @@ export class Registry {
     if (indexUrl && indexUrl.startsWith("sparse")) {
       indexUrl = indexUrl.replace("sparse+", "");
       core.info(`Fetching: ${indexUrl}`);
-      const response = await fetch(indexUrl + "/config.json");
+      const response = await fetch(indexUrl + "config.json");
       core.info(`Response: ${response}`)
       const config = (await response.json()) as RegistryConfig;
       core.info(`config: ${config}`);
