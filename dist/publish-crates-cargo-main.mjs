@@ -78238,7 +78238,9 @@ var Registry = class {
       indexUrl = indexUrl.replace("sparse+", "");
       core3.info(`Fetching: ${indexUrl}`);
       const response = await fetch(indexUrl + "/config.json");
+      core3.info(`Response: ${response}`);
       const config2 = await response.json();
+      core3.info(`config: ${config2}`);
       core3.info(`Found apiUrl: ${config2.api}`);
       return config2.api;
     } else {
