@@ -78242,7 +78242,7 @@ var Registry = class {
       const config2 = await response.json();
       core3.info(`config: ${config2}`);
       core3.info(`Found apiUrl: ${config2.api}`);
-      return config2.api;
+      return config2.api.replace("/api/cargo", "");
     } else {
       core3.info("No sparse index URL found");
       return "";

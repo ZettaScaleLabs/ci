@@ -60,7 +60,7 @@ export class Registry {
       const config = (await response.json()) as RegistryConfig;
       core.info(`config: ${config}`);
       core.info(`Found apiUrl: ${config.api}`);
-      return config.api;
+      return config.api.replace("\/api\/cargo", "");
     } else {
       core.info("No sparse index URL found");
       return "";
