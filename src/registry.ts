@@ -51,13 +51,16 @@ export class Registry {
 
   async getApiUrl(): Promise<string> {
     let indexUrl: string | undefined = process.env.CARGO_REGISTRIES_ARTIFACTORY_INDEX;
+    core.info(`Using indexUrl: ${indexUrl}`);
     if (indexUrl && indexUrl.startsWith("sparse")) {
       indexUrl = indexUrl.replace("sparse+", "");
+      core.info(`Fetching: ${indexUrl}`);
       const response = await fetch(indexUrl + "/config.json");
       const config = (await response.json()) as RegistryConfig;
+      core.info(`Found apiUrl: ${config.api}`);
       return config.api;
     } else {
-      console.log("No sparse index URL found");
+      core.info("No sparse index URL found");
       return "";
     }
   }

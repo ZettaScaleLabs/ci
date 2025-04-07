@@ -78233,13 +78233,16 @@ var Registry = class {
   }
   async getApiUrl() {
     let indexUrl = process.env.CARGO_REGISTRIES_ARTIFACTORY_INDEX;
+    core3.info(`Using indexUrl: ${indexUrl}`);
     if (indexUrl && indexUrl.startsWith("sparse")) {
       indexUrl = indexUrl.replace("sparse+", "");
+      core3.info(`Fetching: ${indexUrl}`);
       const response = await fetch(indexUrl + "/config.json");
       const config2 = await response.json();
+      core3.info(`Found apiUrl: ${config2.api}`);
       return config2.api;
     } else {
-      console.log("No sparse index URL found");
+      core3.info("No sparse index URL found");
       return "";
     }
   }
