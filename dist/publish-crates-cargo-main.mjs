@@ -78373,6 +78373,7 @@ async function publish(path, env, allowDirty = false) {
   };
   for (const package_ of packagesOrdered(path, options)) {
     const registry = new Registry();
+    await registry.init();
     const published = await registry.isPublished(package_);
     if (!published && (package_.publish === void 0 || package_.publish)) {
       const command = ["cargo", "publish", "--locked", "--manifest-path", package_.manifestPath];

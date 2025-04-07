@@ -16,7 +16,7 @@ export class Registry {
     } else {
       // fallback to crates.io without authentication
       this.client = new CratesIO();
-      this.apiUrl = 'https://crates.io/api/v1'
+      this.apiUrl = "https://crates.io/api/v1";
     }
   }
 
@@ -24,7 +24,7 @@ export class Registry {
     if (process.env.CARGO_REGISTRIES_ARTIFACTORY_TOKEN && process.env.CARGO_REGISTRIES_ARTIFACTORY_INDEX) {
       const apiUrl = await this.getApiUrl();
       this.client.setApiUrl(apiUrl);
-      this.apiUrl = apiUrl
+      this.apiUrl = apiUrl;
     }
   }
 
@@ -35,7 +35,7 @@ export class Registry {
       crateResult = await this.client.api.crates.getCrate(pkg.name);
       //if (crateResult.crate && crateResult.crate.max_version != null) {
       if (crateResult.crate && crateResult.crate.newest_version != null) {
-        core.info(`Found package ${pkg.name} version: ${crateResult.crate.newest_version}`)
+        core.info(`Found package ${pkg.name} version: ${crateResult.crate.newest_version}`);
         // for now use max_version, but client should expose newest_version
         return pkg.version === crateResult.crate.newest_version;
       }
