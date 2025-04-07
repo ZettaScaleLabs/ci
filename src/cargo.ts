@@ -3,7 +3,6 @@ import { join } from "path";
 
 import * as core from "@actions/core";
 import * as cache from "@actions/cache";
-import { CratesIO, CrateResult } from 'crates.io';
 
 import { TOML } from "./toml";
 import { sh, CommandOptions } from "./command";
@@ -469,41 +468,3 @@ export function toDebianVersion(version: string, revision?: number): string {
   }
   return `${debVersion}`;
 }
-
-/**
- * Check if Package is already published
- * @param pkg Package to check.
- */
-export async function isPublished(pkg: Package, options?: CommandOptions): Promise<boolean> {
-  const optionsCopy: CommandOptions = Object.assign({}, options);
-  optionsCopy.check = false;
-  return await search(pkg, optionsCopy)
-};
-
-/**
- * Search for a package in the registry.
- */
-async function search(pkg: Package, options?: CommandOptions): Promise<boolean> {
-  let cratesIO: CratesIO;
-  if (options?.env?.CARGO_REGISTRIES_ARTIFACTORY_TOKEN) {
-    cratesIO = new CratesIO(options.env.CARGO_REGISTRIES_ARTIFACTORY_TOKEN);
-    if (options?.env?.CARGO_REGISTRIES_ARTIFACTORY_INDEX) {
-      cratesIO.setApiUrl(options.env.CARGO_REGISTRIES_ARTIFACTORY_INDEX);
-    };
-  } else {
-    // fallback to crates.io without authentication
-    cratesIO = new CratesIO();
-  };
-  let crateResult: CrateResult;
-  try {
-    crateResult = await cratesIO.api.crates.getCrate(pkg.name);
-    //if (crateResult.crate && crateResult.crate.max_version != null) {
-    if (crateResult.crate && crateResult.crate.newest_version != null) {
-      // for now use max_version, but client should expose newest_version
-      return (pkg.version === crateResult.crate.newest_version);
-    };
-    return false;
-  } catch (error) {
-    return false;
-  }
-};

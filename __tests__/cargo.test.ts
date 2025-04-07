@@ -7,11 +7,13 @@ import { mkdtemp, realpath } from "fs/promises";
 import { createWriteStream, rmSync } from "fs";
 import * as https from "https";
 
-import { CommandOptions, sh } from "../src/command";
+import { sh } from "../src/command";
 import * as cargo from "../src/cargo";
 import { TOML } from "../src/toml";
+import { Registry } from "../src/registry";
 
 const toml = await TOML.init();
+const registry = new Registry();
 
 const SHA_ZENOH: string = "9ecc9031ac34f6ae0f8e5b996999277b02b3038e";
 const SHA_ZENOH_KOTLIN: string = "6ba9cf6e058c959614bd7f1f4148e8fa39ef1681";
@@ -203,9 +205,9 @@ describe("cargo", () => {
       name: "foobar",
       version: "0.0.0",
       manifestPath: "Cargo.toml",
-      workspaceDependencies: []
+      workspaceDependencies: [],
     } as cargo.Package;
-    expect(cargo.isPublished(pkg)).resolves.toBeTruthy();
+    expect(registry.isPublished(pkg)).resolves.toBeTruthy();
   });
 
   test("search published package, unpublished version", async () => {
@@ -213,9 +215,9 @@ describe("cargo", () => {
       name: "foobar",
       version: "6.6.6",
       manifestPath: "Cargo.toml",
-      workspaceDependencies: []
+      workspaceDependencies: [],
     } as cargo.Package;
-    expect(cargo.isPublished(pkg)).resolves.toBeFalsy();
+    expect(registry.isPublished(pkg)).resolves.toBeFalsy();
   });
 
   test("search unpublished package, unpublished version", async () => {
@@ -223,28 +225,19 @@ describe("cargo", () => {
       name: "foobarino",
       version: "6.6.6",
       manifestPath: "Cargo.toml",
-      workspaceDependencies: []
+      workspaceDependencies: [],
     } as cargo.Package;
-    expect(cargo.isPublished(pkg)).resolves.toBeFalsy();
+    expect(registry.isPublished(pkg)).resolves.toBeFalsy();
   });
 
   test("search artifactory package", async () => {
-    const env = {
-      CARGO_REGISTRIES_ARTIFACTORY_TOKEN: process.env["CARGO_REGISTRIES_ARTIFACTORY_TOKEN"],
-      CARGO_REGISTRIES_ARTIFACTORY_INDEX: "https://zettascale.jfrog.io/artifactory/api/cargo/zetta-private",
-      CARGO_REGISTRY_GLOBAL_CREDENTIAL_PROVIDERS: "cargo:token",
-      CARGO_REGISTRY_DEFAULT: "artifactory",
-    };
-    const options = {
-      env: env
-    } as CommandOptions
+    // FIXME: set env vars for different registry
     const pkg = {
       name: "foobarino",
       version: "6.6.6",
       manifestPath: "Cargo.toml",
-      workspaceDependencies: []
+      workspaceDependencies: [],
     } as cargo.Package;
-    expect(cargo.isPublished(pkg, options)).resolves.toBeFalsy();
+    expect(registry.isPublished(pkg)).resolves.toBeFalsy();
   });
-
 });
