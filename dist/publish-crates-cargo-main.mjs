@@ -78216,6 +78216,7 @@ var Registry = class {
     try {
       crateResult = await this.client.api.crates.getCrate(pkg.name);
       if (crateResult.crate && crateResult.crate.newest_version != null) {
+        core3.info(`Found package ${pkg.name} version: ${crateResult.crate.newest_version}`);
         return pkg.version === crateResult.crate.newest_version;
       }
       return false;
