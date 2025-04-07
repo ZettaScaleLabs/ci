@@ -170,7 +170,8 @@ async function publish(path: string, env: NodeJS.ProcessEnv, allowDirty: boolean
   for (const package_ of cargo.packagesOrdered(path, options)) {
     // Crates.io won't allow packages to be published with the same version
     const registry = new Registry();
-    if (!(await registry.isPublished(package_)) && (package_.publish === undefined || package_.publish)) {
+    const published = await registry.isPublished(package_)
+    if (!(published) && (package_.publish === undefined || package_.publish)) {
       const command = ["cargo", "publish", "--locked", "--manifest-path", package_.manifestPath];
       if (allowDirty) {
         command.push("--allow-dirty");
