@@ -63605,7 +63605,7 @@ async function main(input) {
     const workspace = input.path === void 0 ? repo : join2(repo, input.path);
     const remote = `https://${input.githubToken}@github.com/${input.repo}.git`;
     sh(`git clone --recursive --single-branch --branch ${input.releaseBranch} ${remote}`);
-    sh(`git switch -c eclipse-zenoh-bot/post-release-${input.version}`, { cwd: repo });
+    sh(`git switch -c ${input.githubUser}/post-release-${input.version}`, { cwd: repo });
     sh(`ls ${workspace}`);
     const cargoLockPaths = sh(`find ${workspace} -name "Cargo.lock"`).split("\n").filter((r) => r);
     for (const path2 of cargoLockPaths) {

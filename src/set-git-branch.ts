@@ -50,7 +50,7 @@ export async function main(input: Input) {
     const remote = `https://${input.githubToken}@github.com/${input.repo}.git`;
 
     sh(`git clone --recursive --single-branch --branch ${input.releaseBranch} ${remote}`);
-    sh(`git switch -c eclipse-zenoh-bot/post-release-${input.version}`, { cwd: repo });
+    sh(`git switch -c ${input.githubUser}/post-release-${input.version}`, { cwd: repo });
     sh(`ls ${workspace}`);
     // Correct Cargo.lock version to 1.75 toolchain compatible version
     const cargoLockPaths = sh(`find ${workspace} -name "Cargo.lock"`)
