@@ -63630,7 +63630,8 @@ async function main(input) {
     }
     for (path of pathsToCheck) {
       gitEnv["CARGO_NET_GIT_FETCH_WITH_CLI"] = "true";
-      sh(`cargo check --manifest-path ${path}`, { env: gitEnv });
+      gitEnv["CARGO_HTTP_DEBUG"] = "true";
+      sh(`cargo check -vv --manifest-path ${path}`, { env: gitEnv });
       sh("find . -name 'Cargo.lock' | xargs git add", { cwd: repo });
       sh("git commit --message 'chore: Update Cargo lockfile'", {
         cwd: repo,
