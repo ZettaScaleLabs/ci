@@ -1,9 +1,12 @@
 import { readdirSync } from "fs";
 import { defineConfig } from "tsup";
 
-const entry = readdirSync("src")
-  .filter(name => ["-pre.ts", "-main.ts", "-post.ts"].some(suffix => name.endsWith(suffix)))
-  .map(name => `src/${name}`);
+const entry = readdirSync("src", { withFileTypes: true })
+  .filter((dirent) => dirent.isFile())
+  .map((dirent) => dirent.name)
+  .filter((name) => ["-pre.ts", "-main.ts", "-post.ts"].some((suffix) => name.endsWith(suffix)))
+  .sort()
+  .map((name) => `src/${name}`);
 
 export default defineConfig({
   entry,
