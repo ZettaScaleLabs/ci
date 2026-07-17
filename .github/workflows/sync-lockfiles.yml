@@ -91,12 +91,6 @@ jobs:
         # NOTE: Showing the active Rust toolchain (defined by the rust-toolchain.toml file)
         # will have the side effect of installing it; if it's not installed already.
         run: |
-
-      # cyclors does not compile with cmake 4
-      - name: Install cmake
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: "3.31.x"
           rustup update ${{ inputs.toolchain || steps.toolchain.outputs.rust-toolchain }}
           rustup component add --toolchain ${{ inputs.toolchain || steps.toolchain.outputs.rust-toolchain }} clippy
 
