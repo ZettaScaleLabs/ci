@@ -84,15 +84,30 @@ jobs:
 
       - id: toolchain
         name: Get Rust toolchain
+        env:
+          TOOLCHAIN_INPUT: ${{ inputs.toolchain }}
         run: |
-          echo "rust-toolchain=$(cat rust-toolchain.toml | grep channel | cut -d'"' -f2)" >> $GITHUB_OUTPUT
+          set -euo pipefail
+
+          if [[ -n "$TOOLCHAIN_INPUT" ]]; then
+            RUST_TOOLCHAIN="$TOOLCHAIN_INPUT"
+          else
+            RUST_TOOLCHAIN="$(yq -r '.toolchain.channel // ""' rust-toolchain.toml)"
+          fi
+
+          if [[ ! "$RUST_TOOLCHAIN" =~ ^[A-Za-z0-9][A-Za-z0-9._+@-]*$ ]]; then
+            echo "Invalid Rust toolchain" >&2
+            exit 1
+          fi
+
+          printf 'RUST_TOOLCHAIN=%s\n' "$RUST_TOOLCHAIN" >> "$GITHUB_ENV"
 
       - name: Install Rust toolchain
         # NOTE: Showing the active Rust toolchain (defined by the rust-toolchain.toml file)
         # will have the side effect of installing it; if it's not installed already.
         run: |
-          rustup update ${{ inputs.toolchain || steps.toolchain.outputs.rust-toolchain }}
-          rustup component add --toolchain ${{ inputs.toolchain || steps.toolchain.outputs.rust-toolchain }} clippy
+          rustup update "${RUST_TOOLCHAIN}"
+          rustup component add --toolchain "${RUST_TOOLCHAIN}" clippy
 
       - name: Install build dependencies
         run: sudo apt-get install -y llvm-dev libclang-dev clang libacl1-dev
@@ -127,21 +142,21 @@ jobs:
       - name: Rectify lockfile
         # NOTE: Checking the package for errors will rectify the Cargo.lock while preserving
         # the dependency versions fetched from source.
-        run: cargo +${{ inputs.toolchain || steps.toolchain.outputs.rust-toolchain }} clippy --manifest-path ${{ steps.crate-path.outputs.value }}/Cargo.toml  --all-targets ${{ steps.clippy-options.outputs.value }} -- --deny warnings
+        run: cargo "+${RUST_TOOLCHAIN}" clippy --manifest-path ${{ steps.crate-path.outputs.value }}/Cargo.toml  --all-targets ${{ steps.clippy-options.outputs.value }} -- --deny warnings
 
       - name: Rectify lockfile for zenoh-c opaque-types
         if: ${{ matrix.dependant == 'eclipse-zenoh/zenoh-c' }}
         # Disable panic feature for zenoh-c opaque-types
         run: |
           features=$(cargo tree --manifest-path build-resources/opaque-types/Cargo.toml -f "{p} {f}" --all-features| grep opaque-types | cut -d" " -f4 | sed s/panic,//)
-          cargo +${{ inputs.toolchain || steps.toolchain.outputs.rust-toolchain }} clippy --manifest-path build-resources/opaque-types/Cargo.toml --all-targets --features $features -- --deny warnings
+          cargo "+${RUST_TOOLCHAIN}" clippy --manifest-path build-resources/opaque-types/Cargo.toml --all-targets --features $features -- --deny warnings
 
       - name: cargo update ${{ matrix.dependant }}
-        run: cargo +${{ inputs.toolchain || steps.toolchain.outputs.rust-toolchain }} update zenoh --manifest-path ${{ steps.crate-path.outputs.value }}/Cargo.toml
+        run: cargo "+${RUST_TOOLCHAIN}" update zenoh --manifest-path ${{ steps.crate-path.outputs.value }}/Cargo.toml
 
       - name: cargo update for zenoh-c build-resources
         if: ${{ matrix.dependant == 'eclipse-zenoh/zenoh-c' }}
-        run: cargo +${{ inputs.toolchain || steps.toolchain.outputs.rust-toolchain }} update zenoh --manifest-path build-resources/opaque-types/Cargo.toml
+        run: cargo "+${RUST_TOOLCHAIN}" update zenoh --manifest-path build-resources/opaque-types/Cargo.toml
 
       - name: Create/Update a pull request if the lockfile changed
         id: cpr
