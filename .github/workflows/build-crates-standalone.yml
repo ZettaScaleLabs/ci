@@ -18,7 +18,7 @@ on:
       exclude-builds:
         type: string
         required: false
-        default: '[]'
+        default: "[]"
   workflow_dispatch:
     inputs:
       repo:
@@ -36,7 +36,7 @@ on:
       exclude-builds:
         type: string
         required: false
-        default: '[]'
+        default: "[]"
 
 jobs:
   build:
@@ -55,15 +55,9 @@ jobs:
           - { target: aarch64-unknown-linux-musl, os: ubuntu-24.04 }
           - { target: x86_64-apple-darwin, os: macos-14 }
           - { target: aarch64-apple-darwin, os: macos-14 }
-          - { target: x86_64-pc-windows-msvc, os: windows-2022}
-          - { target: x86_64-pc-windows-gnu, os: windows-2022}
+          - { target: x86_64-pc-windows-msvc, os: windows-2022 }
+          - { target: x86_64-pc-windows-gnu, os: windows-2022 }
     steps:
-      # cyclors does not compile with cmake 4
-      - name: Install cmake
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: '3.31.x'
-
       - id: build
         uses: eclipse-zenoh/ci/build-crates-standalone@main
         with:
